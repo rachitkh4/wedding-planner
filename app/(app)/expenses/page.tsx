@@ -14,6 +14,40 @@ import { ExpenseRow } from "@/components/expenses/ExpenseRow";
 const SORT_FIELDS = ["date", "amount", "description"] as const;
 type SortField = (typeof SORT_FIELDS)[number];
 
+function sortHref(field: SortField, sort: SortField, dir: "asc" | "desc", categoryId?: string) {
+  const nextDir = sort === field && dir === "desc" ? "asc" : "desc";
+  const search = new URLSearchParams();
+  if (categoryId) search.set("category", categoryId);
+  search.set("sort", field);
+  search.set("dir", nextDir);
+  return `/expenses?${search.toString()}`;
+}
+
+function SortHeader({
+  field,
+  label,
+  sort,
+  dir,
+  categoryId,
+}: {
+  field: SortField;
+  label: string;
+  sort: SortField;
+  dir: "asc" | "desc";
+  categoryId?: string;
+}) {
+  const active = sort === field;
+  return (
+    <Link
+      href={sortHref(field, sort, dir, categoryId)}
+      className="inline-flex items-center gap-1 hover:text-maroon"
+    >
+      {label}
+      {active && (dir === "desc" ? <ArrowDown size={12} /> : <ArrowUp size={12} />)}
+    </Link>
+  );
+}
+
 export default async function ExpensesPage({
   searchParams,
 }: {
@@ -48,25 +82,6 @@ export default async function ExpensesPage({
   const total = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
   const categoryMap = new Map(categories.map((c) => [c.id, c.name]));
 
-  function sortHref(field: SortField) {
-    const nextDir = sort === field && dir === "desc" ? "asc" : "desc";
-    const search = new URLSearchParams();
-    if (categoryId) search.set("category", categoryId);
-    search.set("sort", field);
-    search.set("dir", nextDir);
-    return `/expenses?${search.toString()}`;
-  }
-
-  function SortHeader({ field, label }: { field: SortField; label: string }) {
-    const active = sort === field;
-    return (
-      <Link href={sortHref(field)} className="inline-flex items-center gap-1 hover:text-maroon">
-        {label}
-        {active && (dir === "desc" ? <ArrowDown size={12} /> : <ArrowUp size={12} />)}
-      </Link>
-    );
-  }
-
   return (
     <div>
       <PageHeader
@@ -87,14 +102,20 @@ export default async function ExpensesPage({
             <thead>
               <tr className="border-b border-ink/10 text-xs uppercase tracking-wide text-ink/50">
                 <th className="px-3 py-3">
-                  <SortHeader field="date" label="Date" />
+                  <SortHeader field="date" label="Date" sort={sort} dir={dir} categoryId={categoryId} />
                 </th>
                 <th className="px-3 py-3">Category</th>
                 <th className="px-3 py-3">
-                  <SortHeader field="description" label="Description" />
+                  <SortHeader
+                    field="description"
+                    label="Description"
+                    sort={sort}
+                    dir={dir}
+                    categoryId={categoryId}
+                  />
                 </th>
                 <th className="px-3 py-3">
-                  <SortHeader field="amount" label="Amount" />
+                  <SortHeader field="amount" label="Amount" sort={sort} dir={dir} categoryId={categoryId} />
                 </th>
                 <th className="px-3 py-3">Paid by</th>
                 <th className="px-3 py-3">Method</th>
