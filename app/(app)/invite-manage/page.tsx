@@ -1,3 +1,4 @@
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Card } from "@/components/shared/Card";
@@ -6,6 +7,7 @@ import { CreateInviteButton } from "@/components/invite/CreateInviteButton";
 import { formatDate } from "@/lib/format";
 
 export default async function InviteManagePage() {
+  const session = await auth();
   const [members, invites] = await Promise.all([
     prisma.user.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.inviteToken.findMany({
@@ -25,7 +27,7 @@ export default async function InviteManagePage() {
         <Card>
           <h2 className="font-display text-lg text-ink">New invite link</h2>
           <div className="mt-3">
-            <CreateInviteButton />
+            <CreateInviteButton canInviteAsCouple={session!.user.role === "COUPLE"} />
           </div>
         </Card>
 
@@ -35,7 +37,16 @@ export default async function InviteManagePage() {
             {members.map((m) => (
               <li key={m.id} className="flex items-center justify-between text-sm">
                 <span className="text-ink/80">{m.displayName ?? "(name pending)"}</span>
-                <span className="text-ink/40">{m.email}</span>
+                <span className="flex items-center gap-2">
+                  <span className="text-ink/40">{m.email}</span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                      m.role === "COUPLE" ? "bg-maroon/10 text-maroon" : "bg-ink/8 text-ink/50"
+                    }`}
+                  >
+                    {m.role === "COUPLE" ? "Couple" : "Family"}
+                  </span>
+                </span>
               </li>
             ))}
           </ul>

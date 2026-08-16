@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { signIn, signOut, auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import type { Role } from "@/generated/prisma/enums";
 
 export async function loginAction(_prevState: string | undefined, formData: FormData) {
   try {
@@ -59,7 +60,7 @@ export async function acceptInviteAction(
   const passwordHash = await bcrypt.hash(password, 10);
 
   await prisma.$transaction([
-    prisma.user.create({ data: { email, displayName, passwordHash } }),
+    prisma.user.create({ data: { email, displayName, passwordHash, role: invite.role } }),
     prisma.inviteToken.update({ where: { token }, data: { usedAt: new Date() } }),
   ]);
 
@@ -81,13 +82,16 @@ export async function setDisplayNameAction(_prevState: string | undefined, formD
   redirect("/dashboard");
 }
 
-export async function createInviteAction() {
+export async function createInviteAction(role: keyof typeof Role = "FAMILY") {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
+  // Only an existing Couple-role account can grant Couple-level access to someone else.
+  const grantedRole = role === "COUPLE" && session.user.role === "COUPLE" ? "COUPLE" : "FAMILY";
+
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const invite = await prisma.inviteToken.create({
-    data: { expiresAt, createdById: session.user.id },
+    data: { expiresAt, createdById: session.user.id, role: grantedRole },
   });
   revalidatePath("/invite-manage");
   return invite.token;

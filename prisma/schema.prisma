@@ -15,6 +15,11 @@ enum Visibility {
   EVERYONE
 }
 
+enum Role {
+  COUPLE
+  FAMILY
+}
+
 enum Side {
   BRIDE
   GROOM
@@ -48,6 +53,7 @@ model User {
   email        String   @unique
   passwordHash String
   displayName  String?
+  role         Role     @default(FAMILY)
   createdAt    DateTime @default(now())
 
   invitesCreated  InviteToken[]
@@ -70,6 +76,7 @@ model InviteToken {
   id          String    @id @default(cuid())
   token       String    @unique @default(cuid())
   email       String?
+  role        Role      @default(FAMILY)
   expiresAt   DateTime
   usedAt      DateTime?
   createdAt   DateTime  @default(now())

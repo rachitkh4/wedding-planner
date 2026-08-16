@@ -4,14 +4,15 @@ import { useState, useTransition } from "react";
 import { Check, Copy, Plus } from "lucide-react";
 import { createInviteAction } from "@/lib/actions/auth-actions";
 
-export function CreateInviteButton() {
+export function CreateInviteButton({ canInviteAsCouple }: { canInviteAsCouple: boolean }) {
   const [pending, startTransition] = useTransition();
   const [link, setLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [asCouple, setAsCouple] = useState(false);
 
   function handleCreate() {
     startTransition(async () => {
-      const token = await createInviteAction();
+      const token = await createInviteAction(asCouple ? "COUPLE" : "FAMILY");
       setLink(`${window.location.origin}/invite/${token}`);
       setCopied(false);
     });
@@ -26,6 +27,17 @@ export function CreateInviteButton() {
 
   return (
     <div className="flex flex-col gap-3">
+      {canInviteAsCouple && (
+        <label className="flex items-center gap-2 text-sm text-ink/70">
+          <input
+            type="checkbox"
+            checked={asCouple}
+            onChange={(e) => setAsCouple(e.target.checked)}
+            className="h-4 w-4 accent-maroon"
+          />
+          This is my partner — give full edit access to wedding details
+        </label>
+      )}
       <button
         type="button"
         onClick={handleCreate}

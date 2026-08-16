@@ -12,6 +12,9 @@ export async function updateWeddingMetaAction(data: {
 }) {
   const session = await auth();
   if (!session?.user) throw new Error("Unauthorized");
+  if (session.user.role !== "COUPLE") {
+    throw new Error("Only the couple can edit the wedding details.");
+  }
 
   const existing = await prisma.weddingMeta.findFirst();
   const patch = {

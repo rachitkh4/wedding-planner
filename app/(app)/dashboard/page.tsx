@@ -31,7 +31,7 @@ export default async function DashboardPage() {
       <PageHeader title="Dashboard" subtitle="Your wedding planning, at a glance." />
 
       <Card className="mb-6">
-        <MetaEditor initial={metaValues} />
+        <MetaEditor initial={metaValues} canEdit={session!.user.role === "COUPLE"} />
         {meta && (
           <div className="mt-5 border-t border-ink/10 pt-5">
             <CountdownTimer weddingDate={meta.weddingDate.toISOString()} />

@@ -29,7 +29,7 @@ export default async function ExpensesPage({
   const session = await auth();
   const userId = session!.user.id;
 
-  const [categories, members, expenses] = await Promise.all([
+  const [categoryRows, members, expenses] = await Promise.all([
     prisma.budgetCategory.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.user.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.expense.findMany({
@@ -40,6 +40,10 @@ export default async function ExpensesPage({
       include: { sharedWith: { select: { id: true } } },
     }),
   ]);
+
+  // Plain-object projection — Prisma's Decimal instances can't cross the
+  // server/client boundary, and these client components only need id/name.
+  const categories = categoryRows.map((c) => ({ id: c.id, name: c.name }));
 
   const total = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
   const categoryMap = new Map(categories.map((c) => [c.id, c.name]));

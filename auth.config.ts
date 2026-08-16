@@ -32,6 +32,7 @@ export const authConfig = {
       if (user) {
         token.id = user.id as string;
         token.displayName = (user as { displayName?: string | null }).displayName ?? null;
+        token.role = (user as { role?: "COUPLE" | "FAMILY" }).role ?? "FAMILY";
       }
       return token;
     },
@@ -39,6 +40,7 @@ export const authConfig = {
       if (session.user) {
         session.user.id = token.id;
         session.user.displayName = token.displayName ?? null;
+        session.user.role = token.role ?? "FAMILY";
       }
       return session;
     },
