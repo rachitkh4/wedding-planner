@@ -1,0 +1,210 @@
+// Shubh Vivah — wedding planner data model
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Visibility {
+  PRIVATE
+  SELECTED
+  EVERYONE
+}
+
+enum Side {
+  BRIDE
+  GROOM
+  BOTH
+}
+
+enum RsvpStatus {
+  PENDING
+  CONFIRMED
+  DECLINED
+}
+
+enum PaymentMethod {
+  UPI
+  CARD
+  CASH
+  BANK_TRANSFER
+  CHEQUE
+}
+
+enum VendorStatus {
+  RESEARCHING
+  CONTACTED
+  BOOKED
+  PAID
+  COMPLETED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  displayName  String?
+  createdAt    DateTime @default(now())
+
+  invitesCreated  InviteToken[]
+  notes           Note[]
+
+  ownedTasks    ChecklistTask[] @relation("ChecklistTaskOwner")
+  ownedExpenses Expense[]       @relation("ExpenseOwner")
+  ownedGuests   Guest[]         @relation("GuestOwner")
+  ownedVendors  Vendor[]        @relation("VendorOwner")
+  ownedShopping ShoppingItem[]  @relation("ShoppingItemOwner")
+
+  sharedTasks    ChecklistTask[] @relation("ChecklistTaskSharedWith")
+  sharedExpenses Expense[]       @relation("ExpenseSharedWith")
+  sharedGuests   Guest[]         @relation("GuestSharedWith")
+  sharedVendors  Vendor[]        @relation("VendorSharedWith")
+  sharedShopping ShoppingItem[]  @relation("ShoppingItemSharedWith")
+}
+
+model InviteToken {
+  id          String    @id @default(cuid())
+  token       String    @unique @default(cuid())
+  email       String?
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+  createdById String
+  createdBy   User      @relation(fields: [createdById], references: [id])
+}
+
+// Singleton row — always queried via findFirst(), never by a known id.
+model WeddingMeta {
+  id            String   @id @default(cuid())
+  partner1Name  String
+  partner2Name  String
+  weddingDate   DateTime @db.Date
+  city          String?
+  updatedAt     DateTime @updatedAt
+}
+
+model EventItem {
+  id        String   @id @default(cuid())
+  name      String
+  date      DateTime @db.Date
+  venue     String?
+  sortOrder Int      @default(0)
+
+  scheduleEntries ScheduleEntry[]
+  invitedGuests   Guest[]         @relation("GuestInvitedEvents")
+}
+
+model ScheduleEntry {
+  id        String @id @default(cuid())
+  eventId   String
+  event     EventItem @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  time      String
+  activity  String
+  sortOrder Int    @default(0)
+}
+
+model ChecklistPhase {
+  id        String @id @default(cuid())
+  name      String
+  sortOrder Int    @default(0)
+
+  tasks ChecklistTask[]
+}
+
+model ChecklistTask {
+  id         String   @id @default(cuid())
+  phaseId    String
+  phase      ChecklistPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  text       String
+  done       Boolean  @default(false)
+  assignedTo String?
+  sortOrder  Int      @default(0)
+
+  ownerId    String
+  owner      User       @relation("ChecklistTaskOwner", fields: [ownerId], references: [id])
+  visibility Visibility @default(EVERYONE)
+  sharedWith User[]     @relation("ChecklistTaskSharedWith")
+}
+
+model BudgetCategory {
+  id              String  @id @default(cuid())
+  name            String
+  estimatedAmount Decimal @db.Decimal(12, 2)
+  sortOrder       Int     @default(0)
+
+  expenses Expense[]
+}
+
+model Expense {
+  id            String        @id @default(cuid())
+  categoryId    String
+  category      BudgetCategory @relation(fields: [categoryId], references: [id])
+  date          DateTime      @db.Date
+  description   String
+  amount        Decimal       @db.Decimal(12, 2)
+  paidBy        String
+  paymentMethod PaymentMethod
+
+  ownerId    String
+  owner      User       @relation("ExpenseOwner", fields: [ownerId], references: [id])
+  visibility Visibility @default(EVERYONE)
+  sharedWith User[]     @relation("ExpenseSharedWith")
+
+  createdAt DateTime @default(now())
+}
+
+model Guest {
+  id          String     @id @default(cuid())
+  name        String
+  side        Side
+  headcount   Int        @default(1)
+  rsvpStatus  RsvpStatus @default(PENDING)
+
+  invitedEvents EventItem[] @relation("GuestInvitedEvents")
+
+  ownerId    String
+  owner      User       @relation("GuestOwner", fields: [ownerId], references: [id])
+  visibility Visibility @default(EVERYONE)
+  sharedWith User[]     @relation("GuestSharedWith")
+}
+
+model Vendor {
+  id           String       @id @default(cuid())
+  category     String
+  name         String
+  contact      String?
+  quotedCost   Decimal?     @db.Decimal(12, 2)
+  advancePaid  Decimal      @default(0) @db.Decimal(12, 2)
+  status       VendorStatus @default(RESEARCHING)
+
+  ownerId    String
+  owner      User       @relation("VendorOwner", fields: [ownerId], references: [id])
+  visibility Visibility @default(EVERYONE)
+  sharedWith User[]     @relation("VendorSharedWith")
+}
+
+model ShoppingItem {
+  id             String  @id @default(cuid())
+  item           String
+  category       String?
+  budgetEstimate Decimal? @db.Decimal(12, 2)
+  bought         Boolean  @default(false)
+
+  ownerId    String
+  owner      User       @relation("ShoppingItemOwner", fields: [ownerId], references: [id])
+  visibility Visibility @default(EVERYONE)
+  sharedWith User[]     @relation("ShoppingItemSharedWith")
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text      String
+  done      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
