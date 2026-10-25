@@ -169,3 +169,4 @@ me" filtering going forward.
 - **Visibility**: `lib/visibility.ts` exports the one `visibleToWhere(userId)`
   Prisma filter reused by every list query *and* every aggregate stat, so
   numbers are always consistent with what the current viewer can see.
+# wedding-planner
