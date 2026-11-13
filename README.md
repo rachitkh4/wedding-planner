@@ -34,10 +34,20 @@ from the planner. Share the one link from **Guest App** in the sidebar.
 - **Home** shows what's happening now and what's next; **Events** lists every
   event marked *Shown to guests* in Itinerary, with time, venue, dress code,
   programme and a directions button; **Help** has one-tap Call/WhatsApp buttons
+- **My Trip** tab: RSVP (yes/no, how many, names of the others coming), arrival and
+  return journeys (train / flight / bus / car, date and time in India time, station
+  or airport, train or flight number, PNR), and the room the family assigns. The
+  RSVP also updates the matching Guest List entry (status and headcount)
 - **Hindi / English** switch on every screen; installable to the home screen
 - Registrations whose number matches a Guest List entry are linked
   automatically; the rest can be linked, added or removed on the Guest App page,
   where you can also reset a guest's PIN
+
+In the planner, **Arrivals** (and Departures) lists every journey grouped by day and
+time of day, with people totals per day and per mode, who said yes but hasn't added
+travel, a print view and a CSV export. **Stay** shows every reply and lets you assign
+a hotel and room per family. PNRs are stored as typed; there is no automatic railway
+lookup.
 
 Guest sessions use their own signed cookie (keyed from `NEXTAUTH_SECRET`, or
 `GUEST_SESSION_SECRET` if set) and can never access planner pages or actions.

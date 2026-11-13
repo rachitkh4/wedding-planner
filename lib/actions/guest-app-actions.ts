@@ -90,3 +90,22 @@ export async function deleteHelpContactAction(id: string) {
   await prisma.helpContact.delete({ where: { id } });
   revalidatePath("/guest-app");
 }
+
+/** Room assignment shown to the guest in their app. */
+export async function updateStayAction(
+  accountId: string,
+  patch: { stayPlace?: string; stayRoom?: string; stayNote?: string },
+) {
+  await requireUserId();
+  const clean = (v: string | undefined, max: number) =>
+    v === undefined ? undefined : v.trim().slice(0, max) || null;
+  await prisma.guestAccount.update({
+    where: { id: accountId },
+    data: {
+      stayPlace: clean(patch.stayPlace, 120),
+      stayRoom: clean(patch.stayRoom, 40),
+      stayNote: clean(patch.stayNote, 300),
+    },
+  });
+  revalidatePath("/stay");
+}

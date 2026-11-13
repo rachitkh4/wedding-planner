@@ -18,7 +18,7 @@ export function AppShell({
   return (
     <div className="flex min-h-screen bg-ivory">
       {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-ink/10 bg-white/50 md:flex">
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-ink/10 bg-white/50 md:flex print:hidden">
         <SidebarHeader displayName={displayName} />
         <SidebarNav />
         <div className="border-t border-ink/10 p-3">
@@ -27,7 +27,7 @@ export function AppShell({
       </aside>
 
       {/* Mobile top bar */}
-      <div className="fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b border-ink/10 bg-ivory/95 px-4 py-3 backdrop-blur md:hidden">
+      <div className="fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b border-ink/10 bg-ivory/95 px-4 py-3 backdrop-blur md:hidden print:hidden">
         <span className="font-display text-xl text-maroon">Shubh Vivah</span>
         <button
           type="button"
@@ -67,7 +67,7 @@ export function AppShell({
         </div>
       )}
 
-      <main className="min-w-0 flex-1 px-4 pt-20 pb-10 md:px-10 md:pt-10">
+      <main className="min-w-0 flex-1 px-4 pt-20 pb-10 md:px-10 md:pt-10 print:p-0">
         <div className="mx-auto w-full max-w-6xl">{children}</div>
       </main>
     </div>

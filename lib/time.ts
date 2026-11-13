@@ -83,3 +83,46 @@ export function nowAndNext<T extends TimedEvent>(events: T[], now = new Date()) 
   });
   return { current, next: next ?? null };
 }
+
+/** "2027-01-22" + "14:30" typed in India time → the absolute instant, or null if invalid. */
+export function parseISTDateTime(date: string, time: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) return null;
+  const d = new Date(`${date}T${time}:00+05:30`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** An instant's India-local calendar date as "YYYY-MM-DD". */
+export function istYmd(instant: Date | string): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: IST }).format(new Date(instant));
+}
+
+/** An instant's India-local time as "HH:MM" (24-hour, for form inputs). */
+export function istHm(instant: Date | string): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: IST,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(instant));
+}
+
+/** An instant's India-local time as "6:30 pm". */
+export function formatIstTime(instant: Date | string, locale: Locale): string {
+  return new Intl.DateTimeFormat(intlLocale(locale), {
+    timeZone: IST,
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    numberingSystem: "latn",
+  }).format(new Date(instant));
+}
+
+/** An instant's India-local date as "Fri, 22 Jan". */
+export function formatIstDate(instant: Date | string, locale: Locale): string {
+  return new Intl.DateTimeFormat(intlLocale(locale), {
+    timeZone: IST,
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(new Date(instant));
+}

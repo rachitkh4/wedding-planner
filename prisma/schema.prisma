@@ -40,6 +40,19 @@ enum PaymentMethod {
   CHEQUE
 }
 
+enum TravelDirection {
+  ARRIVAL
+  DEPARTURE
+}
+
+enum TravelMode {
+  TRAIN
+  FLIGHT
+  BUS
+  CAR
+  OTHER
+}
+
 enum VendorStatus {
   RESEARCHING
   CONTACTED
@@ -203,6 +216,47 @@ model GuestAccount {
   sessionVersion Int       @default(0) // bumped on PIN reset to sign out old devices
   lastSeenAt     DateTime?
   createdAt      DateTime  @default(now())
+
+  // RSVP: attending is null until the guest answers. partySize includes the guest.
+  attending Boolean?
+  partySize Int?
+  rsvpAt    DateTime?
+
+  // Room, assigned by the couple and shown to the guest.
+  stayPlace String?
+  stayRoom  String?
+  stayNote  String?
+
+  members GuestMember[]
+  travel  TravelLeg[]
+}
+
+// The other people coming with a GuestAccount (the account holder is not listed).
+model GuestMember {
+  id        String       @id @default(cuid())
+  accountId String
+  account   GuestAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  name      String
+  sortOrder Int          @default(0)
+}
+
+// One arrival and one departure per account. dateTime is an absolute instant;
+// guests enter it in India time.
+model TravelLeg {
+  id        String              @id @default(cuid())
+  accountId String
+  account   GuestAccount        @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  direction TravelDirection
+  mode      TravelMode
+  dateTime  DateTime
+  place     String? // station / airport / city they travel from or to
+  number    String? // train or flight number
+  pnr       String?
+  paxCount  Int                 @default(1)
+  note      String?
+  updatedAt DateTime            @updatedAt
+
+  @@unique([accountId, direction])
 }
 
 model HelpContact {

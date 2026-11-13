@@ -11,6 +11,8 @@ import {
   StickyNote,
   UserPlus,
   Smartphone,
+  Plane,
+  BedDouble,
 } from "lucide-react";
 
 export type NavItem = {
@@ -29,6 +31,8 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/shopping", label: "Shopping", icon: ShoppingBag },
   { href: "/itinerary", label: "Itinerary", icon: CalendarDays },
   { href: "/guest-app", label: "Guest App", icon: Smartphone },
+  { href: "/arrivals", label: "Arrivals", icon: Plane },
+  { href: "/stay", label: "Stay", icon: BedDouble },
   { href: "/notes", label: "My Notes", icon: StickyNote },
   { href: "/invite-manage", label: "Invite", icon: UserPlus },
 ];
