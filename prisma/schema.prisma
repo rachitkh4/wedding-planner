@@ -101,6 +101,14 @@ model EventItem {
   venue     String?
   sortOrder Int      @default(0)
 
+  // Guest-app fields
+  startTime    String? // "HH:MM", 24-hour, India time
+  nameHi       String?
+  dressCode    String?
+  mapUrl       String?
+  description  String?
+  showToGuests Boolean @default(true)
+
   scheduleEntries ScheduleEntry[]
   invitedGuests   Guest[]         @relation("GuestInvitedEvents")
 }
@@ -170,6 +178,7 @@ model Guest {
   side        Side
   headcount   Int        @default(1)
   rsvpStatus  RsvpStatus @default(PENDING)
+  phone       String?    @unique // E.164, e.g. +919876543210
 
   invitedEvents EventItem[] @relation("GuestInvitedEvents")
 
@@ -177,6 +186,31 @@ model Guest {
   owner      User       @relation("GuestOwner", fields: [ownerId], references: [id])
   visibility Visibility @default(EVERYONE)
   sharedWith User[]     @relation("GuestSharedWith")
+
+  accounts GuestAccount[]
+}
+
+// A guest's login for the guest app (/g). Entirely separate from planner `User`s.
+model GuestAccount {
+  id             String    @id @default(cuid())
+  name           String
+  phone          String    @unique // E.164
+  pinHash        String
+  guestId        String?
+  guest          Guest?    @relation(fields: [guestId], references: [id], onDelete: SetNull)
+  failedAttempts Int       @default(0)
+  lockedUntil    DateTime?
+  sessionVersion Int       @default(0) // bumped on PIN reset to sign out old devices
+  lastSeenAt     DateTime?
+  createdAt      DateTime  @default(now())
+}
+
+model HelpContact {
+  id        String @id @default(cuid())
+  label     String
+  name      String
+  phone     String
+  sortOrder Int    @default(0)
 }
 
 model Vendor {

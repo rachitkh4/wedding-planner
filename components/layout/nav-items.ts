@@ -10,6 +10,7 @@ import {
   CalendarDays,
   StickyNote,
   UserPlus,
+  Smartphone,
 } from "lucide-react";
 
 export type NavItem = {
@@ -27,6 +28,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/vendors", label: "Vendors", icon: Store },
   { href: "/shopping", label: "Shopping", icon: ShoppingBag },
   { href: "/itinerary", label: "Itinerary", icon: CalendarDays },
+  { href: "/guest-app", label: "Guest App", icon: Smartphone },
   { href: "/notes", label: "My Notes", icon: StickyNote },
   { href: "/invite-manage", label: "Invite", icon: UserPlus },
 ];

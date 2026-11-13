@@ -15,13 +15,26 @@ export function AddGuestForm() {
   const [name, setName] = useState("");
   const [side, setSide] = useState<keyof typeof Side>("BRIDE");
   const [headcount, setHeadcount] = useState("1");
+  const [phone, setPhone] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
-    createGuestAction({ name: name.trim(), side, headcount: Number(headcount) || 1 });
+    const result = await createGuestAction({
+      name: name.trim(),
+      side,
+      headcount: Number(headcount) || 1,
+      phone,
+    });
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setError(null);
     setName("");
     setHeadcount("1");
+    setPhone("");
   }
 
   return (
@@ -48,6 +61,13 @@ export function AddGuestForm() {
         ))}
       </select>
       <input
+        type="tel"
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+        placeholder="Mobile (optional)"
+        className="w-36 rounded-md border border-ink/10 bg-white px-2 py-1 text-sm text-ink outline-none focus:border-maroon"
+      />
+      <input
         type="number"
         min={1}
         value={headcount}
@@ -60,6 +80,7 @@ export function AddGuestForm() {
       >
         Add guest
       </button>
+      {error && <p className="w-full text-xs text-red-600">{error}</p>}
     </form>
   );
 }

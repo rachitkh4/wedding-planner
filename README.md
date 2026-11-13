@@ -23,6 +23,25 @@ Checklist tasks, Expenses, Guests, Vendors, and Shopping items.
 - **Sharing** — Checklist tasks, Expenses, Guests, Vendors, and Shopping items can each be set to Private (only you), Selected people, or Everyone, by their owner, at any time. Every total on Budget/Dashboard reflects only what the current viewer can see.
 - **Couple vs. Family roles** — the wedding date, couple names, and city on the Dashboard can only be edited by accounts with the **Couple** role (granted at invite time). Everyone else sees it read-only.
 
+## Guest app
+
+Guests get their own mobile-first app at the site root (`/` → `/g`), separate
+from the planner. Share the one link from **Guest App** in the sidebar.
+
+- **Invitation page** with the couple's names, date, city and a live countdown
+- **One-time sign-up** with name, mobile number and a 4-digit PIN (stays logged
+  in for ~6 months; 5 wrong PINs lock the account for 15 minutes)
+- **Home** shows what's happening now and what's next; **Events** lists every
+  event marked *Shown to guests* in Itinerary, with time, venue, dress code,
+  programme and a directions button; **Help** has one-tap Call/WhatsApp buttons
+- **Hindi / English** switch on every screen; installable to the home screen
+- Registrations whose number matches a Guest List entry are linked
+  automatically; the rest can be linked, added or removed on the Guest App page,
+  where you can also reset a guest's PIN
+
+Guest sessions use their own signed cookie (keyed from `NEXTAUTH_SECRET`, or
+`GUEST_SESSION_SECRET` if set) and can never access planner pages or actions.
+
 ## Local setup
 
 ### 1. Prerequisites
