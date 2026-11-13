@@ -1,5 +1,5 @@
 # Shubh Vivah 🪔
-
+ 
 A private, self-hosted wedding planning command center for a multi-event Indian
 wedding — Haldi, Mehendi, Sangeet, Wedding, Reception, and however many events
 you add. Multiple accounts share one workspace, with a private per-user notes
