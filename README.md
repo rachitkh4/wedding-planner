@@ -88,6 +88,27 @@ and under More. On iPhone, reminders only work after the app is added to the Hom
 Screen (Share → Add to Home Screen) and opened from there; the app explains this.
 Messages always appear in the Updates list even if a phone has reminders off.
 
+### Invitation, story, families, blessings and surprises
+
+- **Opening animation:** the first time a guest opens the link they see an envelope
+  with a seal showing your initials. Tapping it opens the envelope while petals fall,
+  then the wedding date sits under gold foil to scratch off (or tap **Show the date**),
+  with a burst of confetti. It plays once per phone, has a **Skip** button, respects
+  the phone's "reduce motion" setting, and a **Watch the opening again** link is at the
+  bottom of the invitation.
+- **Guest Content** page (planner sidebar): edit the wording above your names (English
+  and Hindi) and your wedding hashtag; write **Our story** chapters with a photo each;
+  add **families** for both sides (photo, name, relation, optional Hindi); and hide or
+  delete anything on the **Blessing wall** (guests can write up to three blessings each
+  and remove their own; a hidden blessing disappears for everyone except its author).
+- **Countdown surprises** (Announcements page): a photo plus message for each of the
+  last 7 days before the wedding, sent at 9 am India time and shown in the guests'
+  Updates. Needs the scheduler described above.
+- **Photos:** pictures you upload here are shrunk in the browser to about 1280 pixels
+  and stored in the database (typically 60-150 KB each), so no extra storage service is
+  needed. Only real JPEG, PNG and WebP files are accepted. Guest photo sharing will use
+  proper file storage instead.
+
 Guest sessions use their own signed cookie (keyed from `NEXTAUTH_SECRET`, or
 `GUEST_SESSION_SECRET` if set) and can never access planner pages or actions.
 

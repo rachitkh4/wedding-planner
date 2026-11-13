@@ -111,6 +111,9 @@ model WeddingMeta {
   weddingDate   DateTime @db.Date
   city          String?
   autoReminders Boolean  @default(true) // automatic "starts in 1 hour" style event reminders
+  hashtag          String? // e.g. #RohanWedsAsha
+  invitationText   String? // wording on the invitation page; falls back to a default
+  invitationTextHi String?
   updatedAt     DateTime @updatedAt
 }
 
@@ -228,6 +231,7 @@ model GuestAccount {
   updatesSeenAt  DateTime? // for the unread badge on the Updates bell
 
   pushSubscriptions PushSubscription[]
+  blessings         Blessing[]
 
   // RSVP: attending is null until the guest answers. partySize includes the guest.
   attending Boolean?
@@ -341,6 +345,7 @@ model Announcement {
   sentAt      DateTime?
   sentCount   Int                @default(0)
   failedCount Int                @default(0)
+  imageId     String? // optional photo (SiteImage), used by countdown surprises
   eventId     String? // set for automatic event reminders
   reminderKey String?            @unique // makes reminder creation idempotent
   createdAt   DateTime           @default(now())
@@ -352,4 +357,48 @@ model Announcement {
 model JobHeartbeat {
   name      String   @id
   lastRunAt DateTime
+}
+
+// A small photo uploaded by the couple (already resized in the browser). Kept in
+// the database so it works without any file storage; guest photo sharing will
+// use proper object storage instead.
+model SiteImage {
+  id          String   @id @default(cuid())
+  data        Bytes
+  contentType String
+  createdAt   DateTime @default(now())
+}
+
+model StoryChapter {
+  id        String  @id @default(cuid())
+  title     String
+  titleHi   String?
+  body      String
+  bodyHi    String?
+  imageId   String?
+  sortOrder Int     @default(0)
+}
+
+model FamilyMember {
+  id         String  @id @default(cuid())
+  side       Side // BRIDE or GROOM
+  name       String
+  nameHi     String?
+  relation   String // e.g. "Father of the groom"
+  relationHi String?
+  imageId    String?
+  sortOrder  Int     @default(0)
+}
+
+// Guests write these on the blessings wall; the couple can hide any of them.
+model Blessing {
+  id         String        @id @default(cuid())
+  accountId  String?
+  account    GuestAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  authorName String
+  text       String
+  hidden     Boolean       @default(false)
+  createdAt  DateTime      @default(now())
+
+  @@index([createdAt])
 }

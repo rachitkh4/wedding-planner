@@ -1,6 +1,6 @@
 import type { NextAuthConfig } from "next-auth";
 
-const PUBLIC_PREFIXES = ["/login", "/invite/", "/api/auth", "/g/", "/api/cron/"];
+const PUBLIC_PREFIXES = ["/login", "/invite/", "/api/auth", "/g/", "/api/cron/", "/api/images/"];
 // The guest app (/g) handles its own sign-in with a separate cookie; "/" routes
 // guests and planners to the right place.
 const PUBLIC_PATHS = ["/", "/g", "/manifest.webmanifest", "/sw.js"];

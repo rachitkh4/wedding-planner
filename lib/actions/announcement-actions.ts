@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { parseISTDateTime } from "@/lib/time";
-import { sendDueAnnouncements, syncEventReminders } from "@/lib/notifications";
+import { parseISTDateTime, todayYmdIST, ymd } from "@/lib/time";
+import { deleteImageQuietly } from "@/lib/actions/image-actions";
+import { sendAnnouncementNow, sendDueAnnouncements, syncEventReminders } from "@/lib/notifications";
 
 async function requireUserId() {
   const session = await auth();
@@ -61,8 +62,7 @@ export async function createAnnouncementAction(data: {
 
 export async function sendAnnouncementNowAction(id: string) {
   await requireUserId();
-  await prisma.announcement.updateMany({ where: { id, sentAt: null }, data: { sendAt: new Date() } });
-  await sendDueAnnouncements();
+  await sendAnnouncementNow(id);
   refresh();
 }
 
@@ -72,6 +72,7 @@ export async function deleteAnnouncementAction(id: string) {
   // Automatic reminders are switched off with the toggle, otherwise they would just be recreated.
   if (!a || (a.reminderKey && !a.sentAt)) return;
   await prisma.announcement.delete({ where: { id } });
+  await deleteImageQuietly(a.imageId);
   refresh();
 }
 
@@ -82,4 +83,53 @@ export async function setAutoRemindersAction(enabled: boolean) {
   await prisma.weddingMeta.update({ where: { id: meta.id }, data: { autoReminders: enabled } });
   await syncEventReminders();
   refresh();
+}
+
+/** Countdown surprises go out at 9 am India time on their day. */
+export async function saveSurpriseAction(data: {
+  date: string;
+  title: string;
+  body: string;
+  titleHi?: string;
+  bodyHi?: string;
+  imageId?: string | null;
+}): Promise<{ error?: string }> {
+  await requireUserId();
+  const sendAt = parseISTDateTime(data.date, "09:00");
+  if (!sendAt) return { error: "Choose a valid day." };
+  if (data.date < todayYmdIST()) return { error: "That day has already passed." };
+  const meta = await prisma.weddingMeta.findFirst({ select: { weddingDate: true } });
+  if (meta && data.date > ymd(meta.weddingDate)) return { error: "That is after the wedding day." };
+
+  const existing = await prisma.announcement.findFirst({ where: { kind: "SURPRISE", sendAt } });
+  if (existing?.sentAt) return { error: "That surprise has already been sent." };
+
+  const title = data.title.trim().slice(0, 100);
+  const body = data.body.trim().slice(0, 1000);
+  if (!title && !body && !data.imageId) {
+    // Clearing a day removes its surprise.
+    if (existing) {
+      await prisma.announcement.delete({ where: { id: existing.id } });
+      await deleteImageQuietly(existing.imageId);
+    }
+    refresh();
+    return {};
+  }
+  if (!title || !body) return { error: "Please write a title and a message." };
+
+  const values = {
+    title,
+    body,
+    titleHi: data.titleHi?.trim().slice(0, 100) || null,
+    bodyHi: data.bodyHi?.trim().slice(0, 1000) || null,
+    imageId: data.imageId ?? null,
+  };
+  if (existing) {
+    await prisma.announcement.update({ where: { id: existing.id }, data: values });
+    if (existing.imageId && existing.imageId !== values.imageId) await deleteImageQuietly(existing.imageId);
+  } else {
+    await prisma.announcement.create({ data: { kind: "SURPRISE", sendAt, ...values } });
+  }
+  refresh();
+  return {};
 }

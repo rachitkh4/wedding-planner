@@ -9,6 +9,7 @@ type Item = {
   title: string;
   body: string;
   auto: boolean;
+  surprise: boolean;
   when: string;
   sent: boolean;
   sentCount: number;
@@ -23,6 +24,7 @@ export function AnnouncementRow({ item }: { item: Item }) {
     <li className="flex flex-col gap-1 border-b border-ink/5 px-4 py-3 last:border-0">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <p className="font-medium text-ink/90">{item.title}</p>
+        {item.surprise && <span className="rounded-full bg-maroon/10 px-2 py-0.5 text-xs font-medium text-maroon">Surprise</span>}
         {item.auto && <span className="rounded-full bg-marigold/20 px-2 py-0.5 text-xs font-medium text-ink/60">Auto</span>}
         <span className="ml-auto text-xs text-ink/50">{item.sent ? "Sent" : "Goes out"} {item.when}</span>
       </div>

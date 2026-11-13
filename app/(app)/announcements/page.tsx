@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getSchedulerStatus } from "@/lib/scheduler";
-import { formatIstDate, formatIstTime } from "@/lib/time";
+import { formatIstDate, formatIstTime, parseISTDateTime, todayYmdIST, ymd } from "@/lib/time";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
 import { Card } from "@/components/shared/Card";
@@ -8,10 +8,11 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { AnnouncementForm } from "@/components/announcements/AnnouncementForm";
 import { AnnouncementRow } from "@/components/announcements/AnnouncementRow";
 import { AutoRemindersToggle } from "@/components/announcements/AutoRemindersToggle";
+import { SurpriseEditor, type SurpriseDay } from "@/components/announcements/SurpriseEditor";
 
 export default async function AnnouncementsPage() {
   const [meta, items, devices, accounts, scheduler] = await Promise.all([
-    prisma.weddingMeta.findFirst({ select: { autoReminders: true } }),
+    prisma.weddingMeta.findFirst({ select: { autoReminders: true, weddingDate: true } }),
     prisma.announcement.findMany({ orderBy: { sendAt: "desc" }, take: 100 }),
     prisma.pushSubscription.findMany({ select: { accountId: true } }),
     prisma.guestAccount.count(),
@@ -27,11 +28,49 @@ export default async function AnnouncementsPage() {
     title: a.title,
     body: a.body,
     auto: !!a.reminderKey,
+    surprise: a.kind === "SURPRISE",
     when: when(a.sentAt ?? a.sendAt),
     sent: !!a.sentAt,
     sentCount: a.sentCount,
     failedCount: a.failedCount,
   });
+
+  // The last 7 days before the wedding, one surprise per day.
+  const IDEAS = [
+    "A message from the elders",
+    "A thank-you to guests who are travelling",
+    "A funny story about each other",
+    "Our favourite song",
+    "A message from the parents",
+    "A memory from our engagement",
+    "A childhood photo",
+  ];
+  const surpriseDays: SurpriseDay[] = [];
+  if (meta) {
+    const today = todayYmdIST();
+    for (let n = 7; n >= 1; n--) {
+      const date = new Date(`${ymd(meta.weddingDate)}T00:00:00Z`);
+      date.setUTCDate(date.getUTCDate() - n);
+      const key = date.toISOString().slice(0, 10);
+      const at = parseISTDateTime(key, "09:00")!;
+      const found = items.find((a) => a.kind === "SURPRISE" && a.sendAt.getTime() === at.getTime());
+      surpriseDays.push({
+        date: key,
+        label: formatIstDate(at, "en"),
+        daysToGo: n,
+        past: key < today,
+        sent: !!found?.sentAt,
+        idea: IDEAS[n - 1],
+        value: {
+          title: found?.title ?? "",
+          body: found?.body ?? "",
+          titleHi: found?.titleHi ?? "",
+          bodyHi: found?.bodyHi ?? "",
+          imageId: found?.imageId ?? null,
+        },
+      });
+    }
+  }
 
   const schedulerText = {
     "not-configured": "Not set up (CRON_SECRET is missing)",
@@ -97,6 +136,20 @@ export default async function AnnouncementsPage() {
           </div>
         </Card>
       </div>
+
+      {surpriseDays.length > 0 && (
+        <Card className="mt-6">
+          <h2 className="font-display text-lg text-ink">Countdown surprises</h2>
+          <p className="mt-1 text-xs text-ink/50">
+            A little something for guests every morning in the last week: a photo, a story, a message from the
+            family. Each goes out at 9 am India time (as long as the scheduler is running) and appears in the
+            guests&apos; Updates.
+          </p>
+          <div className="mt-3">
+            <SurpriseEditor days={surpriseDays} />
+          </div>
+        </Card>
+      )}
 
       <div className="mt-6">
         <h2 className="mb-2 font-display text-lg text-ink">Scheduled ({upcoming.length})</h2>

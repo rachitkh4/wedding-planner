@@ -6,6 +6,7 @@ import { logoutGuestAction } from "@/lib/actions/guest-auth-actions";
 import { LanguageToggle } from "@/components/guest/LanguageToggle";
 import { InstallHelp } from "@/components/guest/InstallHelp";
 import { PushSetup } from "@/components/guest/PushSetup";
+import { ExploreTiles } from "@/components/guest/ExploreTiles";
 import { vapidPublicKey } from "@/lib/push";
 
 export default async function GuestMorePage() {
@@ -14,6 +15,10 @@ export default async function GuestMorePage() {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="font-invite text-center text-4xl font-semibold text-maroon">{t.more.title}</h1>
+
+      <Section title={t.explore.title}>
+        <ExploreTiles t={t} />
+      </Section>
 
       <Section title={t.more.you}>
         <p className="text-xl font-semibold text-ink">{guest.name}</p>

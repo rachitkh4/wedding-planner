@@ -25,18 +25,29 @@ export async function sendDueAnnouncements(now = new Date()) {
 
   const results: { id: string; title: string; sent: number; failed: number }[] = [];
   for (const a of due) {
-    // Whoever flips sentAt first owns the send, so a double run never sends twice.
-    const claim = await prisma.announcement.updateMany({
-      where: { id: a.id, sentAt: null },
-      data: { sentAt: new Date() },
-    });
-    if (claim.count === 0) continue;
-
-    const { sent, failed } = await pushAnnouncement(a);
-    await prisma.announcement.update({ where: { id: a.id }, data: { sentCount: sent, failedCount: failed } });
-    results.push({ id: a.id, title: a.title, sent, failed });
+    const result = await deliver(a);
+    if (result) results.push(result);
   }
   return results;
+}
+
+/** Sends one announcement right now without touching its scheduled time. Returns null if it was already sent. */
+export async function sendAnnouncementNow(id: string) {
+  const a = await prisma.announcement.findUnique({ where: { id } });
+  return a ? deliver(a) : null;
+}
+
+async function deliver(a: Pushable) {
+  // Whoever flips sentAt first owns the send, so a double run never sends twice.
+  const claim = await prisma.announcement.updateMany({
+    where: { id: a.id, sentAt: null },
+    data: { sentAt: new Date() },
+  });
+  if (claim.count === 0) return null;
+
+  const { sent, failed } = await pushAnnouncement(a);
+  await prisma.announcement.update({ where: { id: a.id }, data: { sentCount: sent, failedCount: failed } });
+  return { id: a.id, title: a.title, sent, failed };
 }
 
 async function pushAnnouncement(a: Pushable) {

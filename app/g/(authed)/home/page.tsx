@@ -9,6 +9,7 @@ import { CountdownTimer } from "@/components/dashboard/CountdownTimer";
 import { Divider } from "@/components/guest/Ornaments";
 import { GuestEventCard } from "@/components/guest/GuestEventCard";
 import { PushSetup } from "@/components/guest/PushSetup";
+import { ExploreTiles } from "@/components/guest/ExploreTiles";
 import { UpdateCard } from "@/components/guest/UpdateCard";
 import { vapidPublicKey } from "@/lib/push";
 
@@ -75,6 +76,8 @@ export default async function GuestHomePage() {
       {events.length === 0 && (
         <p className="rounded-3xl bg-white/70 px-5 py-4 text-center text-ink/60">{t.noEvents}</p>
       )}
+
+      <ExploreTiles t={t} />
 
       {events.length > 0 && (
         <Link
