@@ -3,8 +3,18 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { syncEventReminders } from "@/lib/notifications";
 
 const PATH = "/itinerary";
+
+/** Keep automatic reminders in step with event changes; never let it break an edit. */
+async function resyncReminders() {
+  try {
+    await syncEventReminders();
+  } catch (error) {
+    console.error("Could not sync event reminders", error);
+  }
+}
 
 async function requireAuth() {
   const session = await auth();
@@ -54,6 +64,7 @@ export async function updateEventAction(
       ...(patch.date !== undefined && { date: new Date(patch.date) }),
     },
   });
+  await resyncReminders();
   revalidatePath("/g", "layout");
   revalidatePath(PATH);
   revalidatePath("/dashboard");
@@ -63,6 +74,7 @@ export async function updateEventAction(
 export async function deleteEventAction(eventId: string) {
   await requireAuth();
   await prisma.eventItem.delete({ where: { id: eventId } });
+  await resyncReminders();
   revalidatePath(PATH);
   revalidatePath("/dashboard");
   revalidatePath("/guests");

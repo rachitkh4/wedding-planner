@@ -53,6 +53,12 @@ enum TravelMode {
   OTHER
 }
 
+enum AnnouncementKind {
+  ANNOUNCEMENT
+  REMINDER
+  SURPRISE
+}
+
 enum VendorStatus {
   RESEARCHING
   CONTACTED
@@ -104,6 +110,7 @@ model WeddingMeta {
   partner2Name  String
   weddingDate   DateTime @db.Date
   city          String?
+  autoReminders Boolean  @default(true) // automatic "starts in 1 hour" style event reminders
   updatedAt     DateTime @updatedAt
 }
 
@@ -217,6 +224,11 @@ model GuestAccount {
   lastSeenAt     DateTime?
   createdAt      DateTime  @default(now())
 
+  locale         String    @default("en") // "en" | "hi": language for notifications
+  updatesSeenAt  DateTime? // for the unread badge on the Updates bell
+
+  pushSubscriptions PushSubscription[]
+
   // RSVP: attending is null until the guest answers. partySize includes the guest.
   attending Boolean?
   partySize Int?
@@ -302,4 +314,42 @@ model Note {
   text      String
   done      Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+// A guest's phone/browser that agreed to receive notifications.
+model PushSubscription {
+  id        String       @id @default(cuid())
+  accountId String
+  account   GuestAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  endpoint  String       @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime     @default(now())
+}
+
+// Something sent to every guest (push + shown in the app's Updates list). It is
+// "sent" once sentAt is set; the first process to set it owns the send, so
+// nothing goes out twice.
+model Announcement {
+  id          String             @id @default(cuid())
+  kind        AnnouncementKind   @default(ANNOUNCEMENT)
+  title       String
+  titleHi     String?
+  body        String
+  bodyHi      String?
+  sendAt      DateTime
+  sentAt      DateTime?
+  sentCount   Int                @default(0)
+  failedCount Int                @default(0)
+  eventId     String? // set for automatic event reminders
+  reminderKey String?            @unique // makes reminder creation idempotent
+  createdAt   DateTime           @default(now())
+
+  @@index([sentAt, sendAt])
+}
+
+// Lets the Announcements page show whether the external scheduler is running.
+model JobHeartbeat {
+  name      String   @id
+  lastRunAt DateTime
 }

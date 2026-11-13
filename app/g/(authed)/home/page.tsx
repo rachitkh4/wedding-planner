@@ -3,11 +3,14 @@ import { ChevronRight, ClipboardList } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getDict } from "@/lib/i18n";
 import { requireGuest } from "@/lib/guest-session";
-import { getWeddingInfo } from "@/lib/guest-data";
+import { getLatestUpdate, getWeddingInfo } from "@/lib/guest-data";
 import { nowAndNext } from "@/lib/time";
 import { CountdownTimer } from "@/components/dashboard/CountdownTimer";
 import { Divider } from "@/components/guest/Ornaments";
 import { GuestEventCard } from "@/components/guest/GuestEventCard";
+import { PushSetup } from "@/components/guest/PushSetup";
+import { UpdateCard } from "@/components/guest/UpdateCard";
+import { vapidPublicKey } from "@/lib/push";
 
 export default async function GuestHomePage() {
   const [guest, { locale, t }, { events, countdownTarget }] = await Promise.all([
@@ -21,6 +24,7 @@ export default async function GuestHomePage() {
   const todo =
     guest.attending === null ? t.trip.cardRsvp : guest.attending && !arrivalAdded ? t.trip.cardTravel : null;
   const firstName = guest.name.split(" ")[0];
+  const latest = await getLatestUpdate();
 
   return (
     <div className="flex flex-col gap-6">
@@ -31,6 +35,14 @@ export default async function GuestHomePage() {
         <p className="mt-2 text-lg text-ink/70">{t.welcome}</p>
         <Divider className="mx-auto mt-4 h-6 w-48" />
       </section>
+
+      {latest && (
+        <Link href="/g/updates" className="block active:scale-[0.99]">
+          <UpdateCard t={t} locale={locale} unread item={latest} />
+        </Link>
+      )}
+
+      <PushSetup publicKey={vapidPublicKey()} t={t} variant="card" />
 
       {todo && (
         <Link

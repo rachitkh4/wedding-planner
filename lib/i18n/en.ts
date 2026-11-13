@@ -153,4 +153,31 @@ export const en = {
     summaryPeople: "people",
     sameDay: "Today",
   },
+
+  updates: {
+    title: "Updates",
+    empty: "No updates yet. We'll post here before each event.",
+    latest: "Latest update",
+    seeAll: "See all updates",
+    bell: "Updates",
+    reminder: "Reminder",
+    announcement: "Announcement",
+  },
+  push: {
+    cardTitle: "Get a reminder before each event",
+    cardBody: "We'll send a short message so you never miss anything.",
+    turnOn: "Turn on reminders",
+    turnOff: "Turn off reminders",
+    on: "Reminders are on ✓",
+    off: "Reminders are off",
+    denied:
+      "Reminders are blocked on this phone. Open your browser's settings for this website and allow Notifications.",
+    unsupported:
+      "Reminders aren't available in this browser. You can still see every update inside the app.",
+    installFirst:
+      "To get reminders on iPhone, first add this app to your Home Screen (steps below), then open it from there and turn reminders on.",
+    working: "Please wait…",
+    failed: "Something went wrong. Please try again.",
+    sectionTitle: "Reminders",
+  },
 };

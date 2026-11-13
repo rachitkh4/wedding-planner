@@ -28,6 +28,8 @@ body {
 /* Guest app (/g) */
 .font-invite {
   font-family: var(--font-cormorant), var(--font-mukta), Georgia, serif;
+  /* Old-style figures make a 1 look like a capital I; times and dates must be easy to read. */
+  font-variant-numeric: lining-nums;
 }
 .guest-paper {
   background-color: var(--color-ivory);

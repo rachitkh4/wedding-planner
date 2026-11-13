@@ -49,6 +49,45 @@ travel, a print view and a CSV export. **Stay** shows every reply and lets you a
 a hotel and room per family. PNRs are stored as typed; there is no automatic railway
 lookup.
 
+### Reminders and announcements
+
+The **Announcements** page sends a message to every guest's phone (and posts it in
+the app's **Updates** list, shown by the bell at the top). You can send now or
+schedule it, add a Hindi version, and copy any message for WhatsApp. Reminders also
+go out automatically for every event that has a start time and is shown to guests:
+at 6 pm the evening before, and 1 hour before it starts. Guests get each message in
+the language they use in the app. Phones that have uninstalled the app are removed
+automatically.
+
+**Setup (one time):**
+
+1. Generate keys and add them to your environment variables (Vercel → Settings →
+   Environment Variables, and your local `.env`):
+
+   ```bash
+   npx web-push generate-vapid-keys
+   ```
+
+   | Variable | Value |
+   |---|---|
+   | `VAPID_PUBLIC_KEY` | the public key |
+   | `VAPID_PRIVATE_KEY` | the private key (keep secret) |
+   | `CRON_SECRET` | any long random string, e.g. `openssl rand -base64 32` |
+
+2. Redeploy, then create a free job on [cron-job.org](https://cron-job.org):
+   - **URL:** `https://YOUR-SITE/api/cron/notify`
+   - **Schedule:** every 5 minutes
+   - Under *Advanced → Headers*, add `Authorization` = `Bearer YOUR_CRON_SECRET`
+     (or, if you prefer, use `https://YOUR-SITE/api/cron/notify?secret=YOUR_CRON_SECRET`)
+
+   Scheduled messages and automatic reminders only go out when this job runs. The
+   Announcements page shows whether it is running ("Scheduler: On").
+
+**For guests:** Android phones get a **Turn on reminders** button on the Home screen
+and under More. On iPhone, reminders only work after the app is added to the Home
+Screen (Share → Add to Home Screen) and opened from there; the app explains this.
+Messages always appear in the Updates list even if a phone has reminders off.
+
 Guest sessions use their own signed cookie (keyed from `NEXTAUTH_SECRET`, or
 `GUEST_SESSION_SECRET` if set) and can never access planner pages or actions.
 

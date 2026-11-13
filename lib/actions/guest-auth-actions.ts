@@ -5,8 +5,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { normalizePhone } from "@/lib/phone";
-import { startGuestSession, endGuestSession } from "@/lib/guest-session";
-import { getDict, LOCALE_COOKIE, type Locale } from "@/lib/i18n";
+import { startGuestSession, endGuestSession, getGuest } from "@/lib/guest-session";
+import { getDict, getLocale, LOCALE_COOKIE, type Locale } from "@/lib/i18n";
 
 const MAX_ATTEMPTS = 5;
 const LOCK_MINUTES = 15;
@@ -35,7 +35,13 @@ export async function registerGuestAction(
   const match = await prisma.guest.findUnique({ where: { phone }, select: { id: true } });
 
   const account = await prisma.guestAccount.create({
-    data: { name, phone, pinHash: await bcrypt.hash(pin, 10), guestId: match?.id ?? null },
+    data: {
+      name,
+      phone,
+      pinHash: await bcrypt.hash(pin, 10),
+      guestId: match?.id ?? null,
+      locale: await getLocale(), // notifications arrive in the language they were reading
+    },
   });
   await startGuestSession(account);
   redirect("/g/home");
@@ -82,7 +88,10 @@ export async function logoutGuestAction() {
 }
 
 export async function setLocaleAction(locale: Locale) {
-  (await cookies()).set(LOCALE_COOKIE, locale === "hi" ? "hi" : "en", {
+  const value = locale === "hi" ? "hi" : "en";
+  const guest = await getGuest();
+  if (guest) await prisma.guestAccount.update({ where: { id: guest.id }, data: { locale: value } });
+  (await cookies()).set(LOCALE_COOKIE, value, {
     path: "/",
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax",

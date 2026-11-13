@@ -5,6 +5,8 @@ import { formatPhone } from "@/lib/phone";
 import { logoutGuestAction } from "@/lib/actions/guest-auth-actions";
 import { LanguageToggle } from "@/components/guest/LanguageToggle";
 import { InstallHelp } from "@/components/guest/InstallHelp";
+import { PushSetup } from "@/components/guest/PushSetup";
+import { vapidPublicKey } from "@/lib/push";
 
 export default async function GuestMorePage() {
   const [guest, { locale, t }] = await Promise.all([requireGuest(), getDict()]);
@@ -17,6 +19,12 @@ export default async function GuestMorePage() {
         <p className="text-xl font-semibold text-ink">{guest.name}</p>
         <p className="text-ink/60">{formatPhone(guest.phone)}</p>
       </Section>
+
+      {vapidPublicKey() && (
+        <Section title={t.push.sectionTitle}>
+          <PushSetup publicKey={vapidPublicKey()} t={t} variant="row" />
+        </Section>
+      )}
 
       <Section title={t.more.language}>
         <LanguageToggle locale={locale} label={t.switchTo} big />

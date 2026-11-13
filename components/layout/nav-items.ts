@@ -13,6 +13,7 @@ import {
   Smartphone,
   Plane,
   BedDouble,
+  Megaphone,
 } from "lucide-react";
 
 export type NavItem = {
@@ -33,6 +34,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/guest-app", label: "Guest App", icon: Smartphone },
   { href: "/arrivals", label: "Arrivals", icon: Plane },
   { href: "/stay", label: "Stay", icon: BedDouble },
+  { href: "/announcements", label: "Announcements", icon: Megaphone },
   { href: "/notes", label: "My Notes", icon: StickyNote },
   { href: "/invite-manage", label: "Invite", icon: UserPlus },
 ];

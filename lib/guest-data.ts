@@ -33,3 +33,13 @@ export function directionsUrl(event: { mapUrl: string | null; venue: string | nu
   }
   return null;
 }
+
+/** The most recent sent update, but only while it is still news (last 3 days). */
+export async function getLatestUpdate() {
+  const since = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+  const latest = await prisma.announcement.findFirst({
+    where: { sentAt: { gt: since } },
+    orderBy: { sentAt: "desc" },
+  });
+  return latest && latest.sentAt ? { ...latest, sentAt: latest.sentAt } : null;
+}
