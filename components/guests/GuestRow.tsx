@@ -7,7 +7,9 @@ import {
   toggleGuestEventAction,
   deleteGuestAction,
   updateGuestVisibilityAction,
+  updateGuestPhoneAction,
 } from "@/lib/actions/guest-actions";
+import { formatPhone } from "@/lib/phone";
 import { useDebouncedSave } from "@/lib/hooks/useDebouncedSave";
 import { VisibilityControl } from "@/components/shared/VisibilityControl";
 import type { SimpleUser } from "@/lib/visibility";
@@ -38,6 +40,8 @@ export function GuestRow({
     name: string;
     side: keyof typeof Side;
     headcount: number;
+    phone: string | null;
+    accounts: { id: string }[];
     rsvpStatus: keyof typeof RsvpStatus;
     ownerId: string;
     visibility: keyof typeof Visibility;
@@ -50,6 +54,8 @@ export function GuestRow({
 }) {
   const [name, setName] = useState(guest.name);
   const [headcount, setHeadcount] = useState(guest.headcount);
+  const [phone, setPhone] = useState(guest.phone ? formatPhone(guest.phone) : "");
+  const [phoneError, setPhoneError] = useState<string | null>(null);
   const invitedIds = new Set(guest.invitedEvents.map((e) => e.id));
 
   const { trigger } = useDebouncedSave(
@@ -72,6 +78,27 @@ export function GuestRow({
           }}
           className="w-32 min-w-32 rounded-md border border-transparent bg-transparent px-1 py-1 text-sm text-ink outline-none hover:border-ink/10 focus:border-maroon/30 focus:bg-white"
         />
+      </td>
+      <td className="px-3 py-2">
+        <input
+          type="tel"
+          value={phone}
+          placeholder="Mobile"
+          title={phoneError ?? undefined}
+          onChange={(e) => setPhone(e.target.value)}
+          onBlur={async () => {
+            const result = await updateGuestPhoneAction(guest.id, phone);
+            setPhoneError(result.error ?? null);
+            if (!result.error) setPhone(result.phone ? formatPhone(result.phone) : "");
+          }}
+          className={`w-32 rounded-md border bg-transparent px-1 py-1 text-sm text-ink outline-none hover:border-ink/10 focus:border-maroon/30 focus:bg-white ${
+            phoneError ? "border-red-400" : "border-transparent"
+          }`}
+        />
+        {phoneError && <p className="text-[11px] text-red-600">{phoneError}</p>}
+        {!phoneError && guest.accounts.length > 0 && (
+          <p className="text-[11px] text-mehendi">✓ Using the app</p>
+        )}
       </td>
       <td className="px-3 py-2">
         <select

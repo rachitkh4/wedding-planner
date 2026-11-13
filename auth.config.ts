@@ -1,6 +1,9 @@
 import type { NextAuthConfig } from "next-auth";
 
-const PUBLIC_PREFIXES = ["/login", "/invite/", "/api/auth"];
+const PUBLIC_PREFIXES = ["/login", "/invite/", "/api/auth", "/g/", "/api/cron/", "/api/images/"];
+// The guest app (/g) handles its own sign-in with a separate cookie; "/" routes
+// guests and planners to the right place.
+const PUBLIC_PATHS = ["/", "/g", "/manifest.webmanifest", "/sw.js"];
 
 export const authConfig = {
   pages: {
@@ -13,7 +16,8 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request }) {
       const { pathname, origin } = request.nextUrl;
-      const isPublic = PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
+      const isPublic =
+        PUBLIC_PATHS.includes(pathname) || PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
       if (isPublic) return true;
 
       const isLoggedIn = !!auth?.user;

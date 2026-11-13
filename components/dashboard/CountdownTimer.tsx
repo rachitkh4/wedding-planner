@@ -13,7 +13,19 @@ function getRemaining(target: number) {
   };
 }
 
-export function CountdownTimer({ weddingDate }: { weddingDate: string }) {
+type Labels = { days: string; hours: string; minutes: string; seconds: string };
+
+export function CountdownTimer({
+  weddingDate,
+  labels = { days: "days", hours: "hrs", minutes: "min", seconds: "sec" },
+  doneMessage = "You're married! 🎉",
+  className = "flex gap-4",
+}: {
+  weddingDate: string;
+  labels?: Labels;
+  doneMessage?: string;
+  className?: string;
+}) {
   const target = new Date(weddingDate).getTime();
   const [remaining, setRemaining] = useState(() => getRemaining(target));
 
@@ -23,24 +35,24 @@ export function CountdownTimer({ weddingDate }: { weddingDate: string }) {
   }, [target]);
 
   if (remaining.past) {
-    return <p className="font-display text-2xl text-mehendi">You&apos;re married! 🎉</p>;
+    return <p className="font-display text-2xl text-mehendi">{doneMessage}</p>;
   }
 
   const units: [string, number][] = [
-    ["days", remaining.days],
-    ["hrs", remaining.hours],
-    ["min", remaining.minutes],
-    ["sec", remaining.seconds],
+    [labels.days, remaining.days],
+    [labels.hours, remaining.hours],
+    [labels.minutes, remaining.minutes],
+    [labels.seconds, remaining.seconds],
   ];
 
   return (
-    <div className="flex gap-4 font-mono">
+    <div className={`${className} font-mono`}>
       {units.map(([label, value]) => (
         <div key={label} className="flex flex-col items-center">
-          <span className="text-3xl font-semibold text-maroon md:text-4xl">
+          <span className="text-3xl font-semibold text-maroon md:text-4xl" suppressHydrationWarning>
             {String(value).padStart(2, "0")}
           </span>
-          <span className="text-xs uppercase tracking-wide text-ink/50">{label}</span>
+          <span className="font-sans text-xs uppercase tracking-wide text-ink/50">{label}</span>
         </div>
       ))}
     </div>

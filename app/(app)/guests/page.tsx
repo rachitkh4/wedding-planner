@@ -18,7 +18,11 @@ export default async function GuestsPage() {
     prisma.guest.findMany({
       where: visibleToWhere(userId),
       orderBy: { name: "asc" },
-      include: { sharedWith: { select: { id: true } }, invitedEvents: { select: { id: true } } },
+      include: {
+        sharedWith: { select: { id: true } },
+        invitedEvents: { select: { id: true } },
+        accounts: { select: { id: true } },
+      },
     }),
   ]);
 
@@ -48,6 +52,7 @@ export default async function GuestsPage() {
             <thead>
               <tr className="border-b border-ink/10 text-xs uppercase tracking-wide text-ink/50">
                 <th className="px-3 py-3">Name</th>
+                <th className="px-3 py-3">Mobile</th>
                 <th className="px-3 py-3">Side</th>
                 <th className="px-3 py-3">Headcount</th>
                 {events.map((event) => (

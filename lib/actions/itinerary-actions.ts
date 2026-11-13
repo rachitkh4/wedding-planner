@@ -3,8 +3,18 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { syncEventReminders } from "@/lib/notifications";
 
 const PATH = "/itinerary";
+
+/** Keep automatic reminders in step with event changes; never let it break an edit. */
+async function resyncReminders() {
+  try {
+    await syncEventReminders();
+  } catch (error) {
+    console.error("Could not sync event reminders", error);
+  }
+}
 
 async function requireAuth() {
   const session = await auth();
@@ -24,16 +34,38 @@ export async function createEventAction(name: string, date: string, venue: strin
 
 export async function updateEventAction(
   eventId: string,
-  patch: { name?: string; date?: string; venue?: string },
+  patch: {
+    name?: string;
+    date?: string;
+    venue?: string;
+    startTime?: string | null;
+    nameHi?: string | null;
+    dressCode?: string | null;
+    mapUrl?: string | null;
+    description?: string | null;
+    showToGuests?: boolean;
+  },
 ) {
   await requireAuth();
+  if (patch.startTime && !/^\d{2}:\d{2}$/.test(patch.startTime)) {
+    throw new Error("Start time must be HH:MM");
+  }
+  if (patch.mapUrl && !/^https:\/\//.test(patch.mapUrl)) {
+    throw new Error("Map link must start with https://");
+  }
+  // Empty strings from cleared inputs are stored as null.
+  const clean = Object.fromEntries(
+    Object.entries(patch).map(([k, v]) => [k, typeof v === "string" && v.trim() === "" && k !== "name" ? null : v]),
+  ) as typeof patch;
   await prisma.eventItem.update({
     where: { id: eventId },
     data: {
-      ...patch,
+      ...clean,
       ...(patch.date !== undefined && { date: new Date(patch.date) }),
     },
   });
+  await resyncReminders();
+  revalidatePath("/g", "layout");
   revalidatePath(PATH);
   revalidatePath("/dashboard");
   revalidatePath("/guests");
@@ -42,6 +74,7 @@ export async function updateEventAction(
 export async function deleteEventAction(eventId: string) {
   await requireAuth();
   await prisma.eventItem.delete({ where: { id: eventId } });
+  await resyncReminders();
   revalidatePath(PATH);
   revalidatePath("/dashboard");
   revalidatePath("/guests");

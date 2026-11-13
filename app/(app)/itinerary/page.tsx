@@ -26,6 +26,12 @@ export default async function ItineraryPage() {
                 name: event.name,
                 date: event.date.toISOString(),
                 venue: event.venue,
+                startTime: event.startTime,
+                nameHi: event.nameHi,
+                dressCode: event.dressCode,
+                mapUrl: event.mapUrl,
+                description: event.description,
+                showToGuests: event.showToGuests,
               }}
               scheduleEntries={event.scheduleEntries}
             />

@@ -40,6 +40,25 @@ enum PaymentMethod {
   CHEQUE
 }
 
+enum TravelDirection {
+  ARRIVAL
+  DEPARTURE
+}
+
+enum TravelMode {
+  TRAIN
+  FLIGHT
+  BUS
+  CAR
+  OTHER
+}
+
+enum AnnouncementKind {
+  ANNOUNCEMENT
+  REMINDER
+  SURPRISE
+}
+
 enum VendorStatus {
   RESEARCHING
   CONTACTED
@@ -91,6 +110,10 @@ model WeddingMeta {
   partner2Name  String
   weddingDate   DateTime @db.Date
   city          String?
+  autoReminders Boolean  @default(true) // automatic "starts in 1 hour" style event reminders
+  hashtag          String? // e.g. #RohanWedsAsha
+  invitationText   String? // wording on the invitation page; falls back to a default
+  invitationTextHi String?
   updatedAt     DateTime @updatedAt
 }
 
@@ -100,6 +123,14 @@ model EventItem {
   date      DateTime @db.Date
   venue     String?
   sortOrder Int      @default(0)
+
+  // Guest-app fields
+  startTime    String? // "HH:MM", 24-hour, India time
+  nameHi       String?
+  dressCode    String?
+  mapUrl       String?
+  description  String?
+  showToGuests Boolean @default(true)
 
   scheduleEntries ScheduleEntry[]
   invitedGuests   Guest[]         @relation("GuestInvitedEvents")
@@ -170,6 +201,7 @@ model Guest {
   side        Side
   headcount   Int        @default(1)
   rsvpStatus  RsvpStatus @default(PENDING)
+  phone       String?    @unique // E.164, e.g. +919876543210
 
   invitedEvents EventItem[] @relation("GuestInvitedEvents")
 
@@ -177,6 +209,78 @@ model Guest {
   owner      User       @relation("GuestOwner", fields: [ownerId], references: [id])
   visibility Visibility @default(EVERYONE)
   sharedWith User[]     @relation("GuestSharedWith")
+
+  accounts GuestAccount[]
+}
+
+// A guest's login for the guest app (/g). Entirely separate from planner `User`s.
+model GuestAccount {
+  id             String    @id @default(cuid())
+  name           String
+  phone          String    @unique // E.164
+  pinHash        String
+  guestId        String?
+  guest          Guest?    @relation(fields: [guestId], references: [id], onDelete: SetNull)
+  failedAttempts Int       @default(0)
+  lockedUntil    DateTime?
+  sessionVersion Int       @default(0) // bumped on PIN reset to sign out old devices
+  lastSeenAt     DateTime?
+  createdAt      DateTime  @default(now())
+
+  locale         String    @default("en") // "en" | "hi": language for notifications
+  updatesSeenAt  DateTime? // for the unread badge on the Updates bell
+
+  pushSubscriptions PushSubscription[]
+  blessings         Blessing[]
+
+  // RSVP: attending is null until the guest answers. partySize includes the guest.
+  attending Boolean?
+  partySize Int?
+  rsvpAt    DateTime?
+
+  // Room, assigned by the couple and shown to the guest.
+  stayPlace String?
+  stayRoom  String?
+  stayNote  String?
+
+  members GuestMember[]
+  travel  TravelLeg[]
+}
+
+// The other people coming with a GuestAccount (the account holder is not listed).
+model GuestMember {
+  id        String       @id @default(cuid())
+  accountId String
+  account   GuestAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  name      String
+  sortOrder Int          @default(0)
+}
+
+// One arrival and one departure per account. dateTime is an absolute instant;
+// guests enter it in India time.
+model TravelLeg {
+  id        String              @id @default(cuid())
+  accountId String
+  account   GuestAccount        @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  direction TravelDirection
+  mode      TravelMode
+  dateTime  DateTime
+  place     String? // station / airport / city they travel from or to
+  number    String? // train or flight number
+  pnr       String?
+  paxCount  Int                 @default(1)
+  note      String?
+  updatedAt DateTime            @updatedAt
+
+  @@unique([accountId, direction])
+}
+
+model HelpContact {
+  id        String @id @default(cuid())
+  label     String
+  name      String
+  phone     String
+  sortOrder Int    @default(0)
 }
 
 model Vendor {
@@ -214,4 +318,87 @@ model Note {
   text      String
   done      Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+// A guest's phone/browser that agreed to receive notifications.
+model PushSubscription {
+  id        String       @id @default(cuid())
+  accountId String
+  account   GuestAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  endpoint  String       @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime     @default(now())
+}
+
+// Something sent to every guest (push + shown in the app's Updates list). It is
+// "sent" once sentAt is set; the first process to set it owns the send, so
+// nothing goes out twice.
+model Announcement {
+  id          String             @id @default(cuid())
+  kind        AnnouncementKind   @default(ANNOUNCEMENT)
+  title       String
+  titleHi     String?
+  body        String
+  bodyHi      String?
+  sendAt      DateTime
+  sentAt      DateTime?
+  sentCount   Int                @default(0)
+  failedCount Int                @default(0)
+  imageId     String? // optional photo (SiteImage), used by countdown surprises
+  eventId     String? // set for automatic event reminders
+  reminderKey String?            @unique // makes reminder creation idempotent
+  createdAt   DateTime           @default(now())
+
+  @@index([sentAt, sendAt])
+}
+
+// Lets the Announcements page show whether the external scheduler is running.
+model JobHeartbeat {
+  name      String   @id
+  lastRunAt DateTime
+}
+
+// A small photo uploaded by the couple (already resized in the browser). Kept in
+// the database so it works without any file storage; guest photo sharing will
+// use proper object storage instead.
+model SiteImage {
+  id          String   @id @default(cuid())
+  data        Bytes
+  contentType String
+  createdAt   DateTime @default(now())
+}
+
+model StoryChapter {
+  id        String  @id @default(cuid())
+  title     String
+  titleHi   String?
+  body      String
+  bodyHi    String?
+  imageId   String?
+  sortOrder Int     @default(0)
+}
+
+model FamilyMember {
+  id         String  @id @default(cuid())
+  side       Side // BRIDE or GROOM
+  name       String
+  nameHi     String?
+  relation   String // e.g. "Father of the groom"
+  relationHi String?
+  imageId    String?
+  sortOrder  Int     @default(0)
+}
+
+// Guests write these on the blessings wall; the couple can hide any of them.
+model Blessing {
+  id         String        @id @default(cuid())
+  accountId  String?
+  account    GuestAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  authorName String
+  text       String
+  hidden     Boolean       @default(false)
+  createdAt  DateTime      @default(now())
+
+  @@index([createdAt])
 }
